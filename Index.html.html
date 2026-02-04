@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Sistem Invoice By Leo</title>
+    <style>
+        :root { --primary-blue: #004a99; --dark-grey: #444; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #525659; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
+        
+        .no-print-area { width: 29.7cm; background: #fff; padding: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px rgba(0,0,0,0.3); margin-bottom: 10px; box-sizing: border-box; }
+        .page { width: 29.7cm; height: 21cm; padding: 0.5cm 0.8cm; background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5); box-sizing: border-box; position: relative; display: flex; flex-direction: column; }
+
+        h2 { color: var(--primary-blue); margin: 0; font-size: 24px; text-decoration: underline; text-align: center; }
+        
+        .top-right-info { position: absolute; right: 0.8cm; top: 0.5cm; text-align: left; width: 200px; }
+        .info-row-flex { display: flex; align-items: center; gap: 5px; margin-bottom: 2px; font-size: 11px; }
+        .info-label { font-weight: bold; width: 40px; flex-shrink: 0; }
+        .info-content { flex-grow: 1; }
+
+        .header-grid { display: grid; grid-template-columns: 1fr; margin-top: 15px; max-width: 60%; }
+        label { display: block; font-weight: bold; font-size: 9px; text-transform: uppercase; margin-bottom: 1px; }
+        input, textarea { width: 100%; border: 1px solid #ccc; padding: 3px; border-radius: 3px; box-sizing: border-box; font-size: 11px; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; border: 1.5px solid #000; }
+        th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; }
+        td { border: 1px solid #000; padding: 0px 1px; vertical-align: middle; height: 20px; font-size: 8px; }
+        
+        .col-no { width: 2.5%; }
+        .col-date { width: 7.5%; }
+        .col-smu { width: 11%; } 
+        .col-shipper { width: 13%; }
+        .col-route { width: 6%; } 
+        .col-comm { width: 7%; }
+        .col-qty { width: 3%; }
+        .col-money { width: 9%; }
+        .col-total { width: 10%; }
+
+        .tbl-input { border: none; padding: 0; text-align: center; width: 100%; font-size: 8px; background: transparent; height: 100%; }
+        .txt-right { text-align: right; padding-right: 3px; }
+
+        .footer-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; margin-top: auto; padding-top: 10px; }
+        .summary-table { width: 100%; border: none; }
+        .summary-table td { border: none; padding: 1px 0; font-size: 11px; vertical-align: middle; height: auto !important; }
+        .total-row { border-top: 2px solid var(--primary-blue); color: var(--primary-blue); font-weight: bold; font-size: 15px !important; }
+        .val-cell { width: 150px; text-align: right; font-weight: bold; }
+
+        .signature-area { text-align: center; font-size: 11px; margin-top: 25px; width: 220px; float: right; }
+
+        .btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
+        .btn-blue { background: #0056b3; color: white; }
+        .btn-green { background: #28a745; color: white; }
+        .btn-orange { background: #f39c12; color: white; }
+
+        @media print {
+            @page { size: landscape; margin: 0; }
+            body { background: white; padding: 0; }
+            .page { box-shadow: none; margin: 0; width: 29.7cm; height: 21cm; border: none; }
+            .no-print-area, .btn-add { display: none !important; }
+            
+            .header-grid input, .header-grid textarea, .top-right-info input, .payment-box input { 
+                border: none !important; padding: 0 !important; background: transparent !important; outline: none !important;
+            }
+
+            table, th, td {
+                border: 1.2pt solid #000 !important;
+                color: #000 !important;
+            }
+            th { 
+                background-color: transparent !important; 
+                color: #000 !important;
+                -webkit-print-color-adjust: exact; 
+            }
+            .row-total, .tbl-input { background-color: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="no-print-area">
+    <div>
+        <strong>Import CSV:</strong> 
+        <input type="file" id="csvFile" accept=".csv" style="width: 170px;">
+        <button class="btn btn-blue" onclick="importDatabase()">Upload Database</button>
+    </div>
+    <div style="display: flex; gap: 8px;">
+        <button class="btn btn-orange" onclick="downloadAsHTML()">SAVE</button>
+        <button class="btn btn-green" onclick="window.print()">PRINT INVOICE</button>
+    </div>
+</div>
+
+<div class="page">
+    <div class="title-container">
+        <h2>INVOICE</h2>
+        <div class="top-right-info">
+            <div class="info-row-flex">
+                <span class="info-label">No</span>
+                <span class="info-content">: <span id="invNo" contenteditable="true" style="color:var(--primary-blue); font-weight:bold;">001A/INV/0126</span></span>
+            </div>
+            <div class="info-row-flex">
+                <span class="info-label">Date</span>
+                <span class="info-content">: <input type="date" id="invDateInput" onchange="updateSignatureDate()" style="width:110px;"></span>
+            </div>
+            <div class="info-row-flex">
+                <span class="info-label">Term</span>
+                <span class="info-content">: <input type="text" value="7 Days" style="width:110px;"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="header-grid">
+        <div>
+            <label>Customer Name</label>
+            <input list="cust-list" id="custName" oninput="handleMultiAutofill(this.value)" placeholder="Pilih customer..." style="font-weight:bold; border: 2px solid var(--primary-blue);">
+            <datalist id="cust-list"></datalist>
+            
+            <div style="margin-top:8px;">
+                <label>Alamat (Opsional)</label>
+                <textarea id="custAddr" rows="2" style="resize: none;" placeholder=""></textarea>
+            </div>
+        </div>
+    </div>
+
+    <table id="invoiceTable">
+        <thead>
+            <tr>
+                <th class="col-no">NO</th>
+                <th class="col-date">DATE</th>
+                <th class="col-smu">SMU NO</th>
+                <th class="col-shipper">SHIPPER</th>
+                <th class="col-route">ROUTE</th>
+                <th class="col-comm">CMDTY</th>
+                <th class="col-qty">KOLI</th>
+                <th class="col-qty">KG</th>
+                <th class="col-qty">VOL</th>
+                <th class="col-money">RATE</th>
+                <th class="col-money">ADM</th>
+                <th class="col-money">SC</th>
+                <th class="col-money">DG</th>
+                <th class="col-total">TOTAL</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+    </table>
+    
+    <button class="btn btn-blue btn-add" onclick="addRow()" style="margin-top:5px; font-size: 9px; padding: 2px 8px;">+ Add row</button>
+
+    <div class="footer-container">
+        <div class="payment-box" style="font-size: 10px;">
+            <div style="margin-bottom: 5px;">
+                <strong>DUE DATE :</strong> 
+                <input type="text" value="-" style="width: 150px; border:none; border-bottom:1px solid #ddd; font-weight:bold;">
+            </div>
+            <strong>Payment Transfer to:</strong><br>
+            Bank MANDIRI KCP Jakarta Kota<br>
+            ACC Name : <strong>Daniel Sinaga</strong><br>
+            ACC IDR : <strong>1150011409887</strong>
+        </div>
+        <div style="text-align:right;">
+            <table class="summary-table">
+                <tr>
+                    <td style="text-align:right; padding-right:10px;">Additional Cost</td>
+                    <td class="val-cell"><input type="text" id="additionalCost" value="Rp 0" oninput="formatAndCalc(this)" style="text-align:right; font-weight:bold; font-size: 12px; border:none; border-bottom:1px solid #ccc;"></td>
+                </tr>
+                <tr>
+                    <td style="text-align:right; padding-right:10px; font-weight:bold;">Sub Total</td>
+                    <td id="subTotal" class="val-cell">Rp 0</td>
+                </tr>
+                <tr class="total-row">
+                    <td style="text-align:right; padding-right:10px;">TOTAL INVOICE</td>
+                    <td id="grandTotal" class="val-cell">Rp 0</td>
+                </tr>
+            </table>
+
+            <div class="signature-area">
+                <span id="signatureDate">Jakarta, ...</span><br><br><br><br>
+                <div style="font-weight:bold; text-decoration:underline;">( Luki nur ain )</div>
+                Finance
+            </div>
+        </div>
+    </div>
+</div>
+
+<script id="db-script">
+    // Bagian ini akan diisi otomatis saat Anda klik "SIMPAN CADANGAN"
+    let globalDatabase = []; 
+
+    window.onload = () => {
+        if (globalDatabase.length > 0) {
+            populateDatalist();
+            console.log("Database dimuat dari file HTML ini.");
+        } else {
+            const savedDB = localStorage.getItem('invoice_master_db');
+            if (savedDB) {
+                globalDatabase = JSON.parse(savedDB);
+                populateDatalist();
+            }
+        }
+        document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
+        updateSignatureDate();
+        addRow();
+    }
+
+    // FUNGSI UNTUK MENYIMPAN SELURUH HALAMAN + DATA KE DALAM FILE .HTML
+    function downloadAsHTML() {
+        if (globalDatabase.length === 0) return alert("Database masih kosong!");
+        
+        // Simpan ke localStorage juga agar sinkron
+        localStorage.setItem('invoice_master_db', JSON.stringify(globalDatabase));
+
+        // Clone seluruh dokumen
+        let currentHTML = document.documentElement.outerHTML;
+        
+        // Masukkan data ke dalam script globalDatabase agar saat dibuka file baru, data sudah ada
+        const dataInjected = `let globalDatabase = ${JSON.stringify(globalDatabase)};`;
+        currentHTML = currentHTML.replace(/let globalDatabase = \[\];/, dataInjected);
+
+        const blob = new Blob([currentHTML], { type: 'text/html' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = `Sistem_Invoice_Backup_${new Date().toLocaleDateString('id-ID')}.html`;
+        a.click();
+    }
+
+    function importDatabase() {
+        const file = document.getElementById('csvFile').files[0];
+        if (!file) return alert("Pilih file CSV!");
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const rows = e.target.result.split('\n');
+            globalDatabase = [];
+            for (let i = 1; i < rows.length; i++) {
+                const cols = rows[i].split(';');
+                if (cols.length >= 10) {
+                    globalDatabase.push({
+                        date: cols[0]?.trim(), smu: cols[1]?.trim(),
+                        customer: cols[2]?.replace(/\"/g, '').trim(),
+                        shipper: cols[3]?.trim(), route: cols[4]?.trim(),
+                        commodity: cols[5]?.trim(), koli: cols[6]?.trim(),
+                        kg: cols[7]?.trim(), vol: cols[8]?.trim(),
+                        rate: cols[9]?.replace(/[^0-9]/g, '') || "0",
+                        adm: cols[10]?.replace(/[^0-9]/g, '') || "0",
+                        sur: cols[11]?.replace(/[^0-9]/g, '') || "0",
+                        dg: cols[12]?.replace(/[^0-9]/g, '') || "0"
+                    });
+                }
+            }
+            populateDatalist();
+            localStorage.setItem('invoice_master_db', JSON.stringify(globalDatabase));
+            alert("Data Berhasil DiUpload");
+        };
+        reader.readAsText(file);
+    }
+
+    function populateDatalist() {
+        const datalist = document.getElementById('cust-list');
+        datalist.innerHTML = "";
+        const uniqueNames = [...new Set(globalDatabase.map(d => d.customer))];
+        uniqueNames.forEach(name => {
+            if(name) {
+                const opt = document.createElement('option');
+                opt.value = name;
+                datalist.appendChild(opt);
+            }
+        });
+    }
+
+    function handleMultiAutofill(selectedCust) {
+        const matches = globalDatabase.filter(d => d.customer === selectedCust);
+        if (matches.length > 0) {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = "";
+            document.getElementById('custAddr').value = ""; 
+
+            matches.forEach((data, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td style="text-align:center;">${index + 1}</td>
+                    <td><input type="text" class="tbl-input" value="${data.date}"></td>
+                    <td><input type="text" class="tbl-input" value="${data.smu}"></td>
+                    <td><input type="text" class="tbl-input" value="${data.shipper}"></td>
+                    <td><input type="text" class="tbl-input" value="${data.route}"></td>
+                    <td><input type="text" class="tbl-input" value="${data.commodity}"></td>
+                    <td><input type="number" class="tbl-input" value="${data.koli}"></td>
+                    <td><input type="number" class="tbl-input kg" value="${data.kg}" oninput="calculate()"></td>
+                    <td><input type="number" class="tbl-input vol" value="${data.vol}" oninput="calculate()"></td>
+                    <td><input type="text" class="tbl-input rate txt-right" value="${formatIDR(data.rate)}" oninput="formatAndCalc(this)"></td>
+                    <td><input type="text" class="tbl-input adm txt-right" value="${formatIDR(data.adm)}" oninput="formatAndCalc(this)"></td>
+                    <td><input type="text" class="tbl-input sur txt-right" value="${formatIDR(data.sur)}" oninput="formatAndCalc(this)"></td>
+                    <td><input type="text" class="tbl-input dg txt-right" value="${formatIDR(data.dg)}" oninput="formatAndCalc(this)"></td>
+                    <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
+                `;
+            });
+            calculate();
+        }
+    }
+
+    function formatIDR(val) {
+        let num = val.toString().replace(/[^0-9]/g, '');
+        if (!num || num === "0") return "Rp 0";
+        return "Rp " + parseInt(num).toLocaleString('id-ID');
+    }
+
+    function formatAndCalc(el) { el.value = formatIDR(el.value); calculate(); }
+
+    function parseNum(val) {
+        if (!val) return 0;
+        let clean = val.toString().replace(/Rp/g, '').replace(/\./g, '').trim();
+        return parseFloat(clean) || 0;
+    }
+
+    function calculate() {
+        let sub = 0;
+        document.querySelectorAll('#tableBody tr').forEach(row => {
+            const vol = parseFloat(row.querySelector('.vol').value) || 0;
+            const r = parseNum(row.querySelector('.rate').value);
+            const a = parseNum(row.querySelector('.adm').value);
+            const s = parseNum(row.querySelector('.sur').value);
+            const d = parseNum(row.querySelector('.dg').value);
+            const total = (vol * r) + a + s + d;
+            row.querySelector('.row-total').innerText = formatIDR(total);
+            sub += total;
+        });
+        const add = parseNum(document.getElementById('additionalCost').value);
+        document.getElementById('subTotal').innerText = formatIDR(sub);
+        document.getElementById('grandTotal').innerText = formatIDR(sub + add);
+    }
+
+    function addRow() {
+        const tbody = document.getElementById('tableBody');
+        const nextNo = tbody.rows.length + 1;
+        const row = tbody.insertRow();
+        row.innerHTML = `
+            <td style="text-align:center;">${nextNo}</td>
+            <td><input type="text" class="tbl-input"></td>
+            <td><input type="text" class="tbl-input"></td>
+            <td><input type="text" class="tbl-input"></td>
+            <td><input type="text" class="tbl-input"></td>
+            <td><input type="text" class="tbl-input"></td>
+            <td><input type="number" class="tbl-input" value="1"></td>
+            <td><input type="number" class="tbl-input kg" oninput="calculate()"></td>
+            <td><input type="number" class="tbl-input vol" oninput="calculate()"></td>
+            <td><input type="text" class="tbl-input rate txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
+            <td><input type="text" class="tbl-input adm txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
+            <td><input type="text" class="tbl-input sur txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
+            <td><input type="text" class="tbl-input dg txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
+            <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
+        `;
+    }
+
+    function updateSignatureDate() {
+        const d = document.getElementById('invDateInput').value;
+        if (!d) return;
+        document.getElementById('signatureDate').innerText = `Jakarta, ${new Date(d).toLocaleDateString('id-ID', {day:'numeric', month:'long', year:'numeric'})}`;
+    }
+</script>
+</body>
+</html>
