@@ -34,7 +34,7 @@
         .col-qty { width: 3%; }
         .col-money { width: 9%; }
         .col-total { width: 10%; }
-        .col-action { width: 3%; } /* Kolom Aksi */
+        .col-action { width: 3%; }
 
         .tbl-input { border: none; padding: 0; text-align: center; width: 100%; font-size: 8px; background: transparent; height: 100%; }
         .txt-right { text-align: right; padding-right: 3px; }
@@ -45,6 +45,9 @@
         .total-row { border-top: 2px solid var(--primary-blue); color: var(--primary-blue); font-weight: bold; font-size: 15px !important; }
         .val-cell { width: 150px; text-align: right; font-weight: bold; }
 
+        .add-cost-input { border: none; border-bottom: 1px dashed #ccc; width: 100%; text-align: right; font-size: 11px; padding: 2px; }
+        .add-cost-label { border: none; width: 100%; text-align: right; font-size: 11px; color: #555; }
+
         .signature-area { text-align: center; font-size: 11px; margin-top: 20px; width: 250px; float: right; }
         .sig-space { height: 120px; } 
 
@@ -53,13 +56,14 @@
         .btn-green { background: #28a745; color: white; }
         .btn-orange { background: #f39c12; color: white; }
         .btn-del { background: #dc3545; color: white; padding: 2px 5px; font-size: 8px; border-radius: 2px; }
+        .btn-small-add { background: #6c757d; color: white; font-size: 9px; padding: 2px 5px; margin-bottom: 5px; }
 
         @media print {
             @page { size: landscape; margin: 0; }
             body { background: white; padding: 0; }
             .page { box-shadow: none; margin: 0; width: 29.7cm; height: 21cm; border: none; }
-            .no-print-area, .btn-add, .col-action, .btn-del { display: none !important; }
-            .header-grid input, .header-grid textarea, .top-right-info input, .payment-box input { border: none !important; padding: 0 !important; background: transparent !important; outline: none !important; }
+            .no-print-area, .btn-add, .col-action, .btn-del, .btn-small-add { display: none !important; }
+            .header-grid input, .header-grid textarea, .top-right-info input, .payment-box input, .add-cost-input, .add-cost-label { border: none !important; padding: 0 !important; background: transparent !important; outline: none !important; }
             table, th, td { border: 1.2pt solid #000 !important; color: #000 !important; }
             th { background-color: transparent !important; color: #000 !important; -webkit-print-color-adjust: exact; }
             .row-total, .tbl-input { background-color: transparent !important; }
@@ -149,11 +153,8 @@
             ACC IDR : <strong>1150011409887</strong>
         </div>
         <div style="text-align:right;">
-            <table class="summary-table">
-                <tr>
-                    <td style="text-align:right; padding-right:10px;">Additional Cost</td>
-                    <td class="val-cell"><input type="text" id="additionalCost" value="Rp 0" oninput="formatAndCalc(this)" style="text-align:right; font-weight:bold; font-size: 12px; border:none; border-bottom:1px solid #ccc;"></td>
-                </tr>
+            <button class="btn btn-small-add" onclick="addAdditionalCostRow()">+ Additional Cost</button>
+            <table class="summary-table" id="summaryTable">
                 <tr>
                     <td style="text-align:right; padding-right:10px; font-weight:bold;">Sub Total</td>
                     <td id="subTotal" class="val-cell">Rp 0</td>
@@ -187,6 +188,29 @@
         document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
         updateSignatureDate();
         addRow();
+    }
+
+    function addAdditionalCostRow() {
+        const table = document.getElementById('summaryTable');
+        const rowCount = table.rows.length;
+        const row = table.insertRow(rowCount - 1); // Insert before Grand Total
+        row.className = "additional-cost-row";
+        row.innerHTML = `
+            <td style="text-align:right; padding-right:10px;">
+                <input type="text" class="add-cost-label" value="Keterangan Biaya" onfocus="this.select()">
+            </td>
+            <td class="val-cell">
+                <div style="display:flex; align-items:center;">
+                    <button class="btn-del btn-small-add" style="margin-right:5px; margin-bottom:0;" onclick="deleteAddCost(this)">x</button>
+                    <input type="text" class="add-cost-input" value="Rp 0" oninput="formatAndCalc(this)">
+                </div>
+            </td>
+        `;
+    }
+
+    function deleteAddCost(btn) {
+        btn.closest('tr').remove();
+        calculate();
     }
 
     function removeRow(btn) {
@@ -330,9 +354,14 @@
             row.querySelector('.row-total').innerText = formatIDR(total);
             sub += total;
         });
-        const add = parseNum(document.getElementById('additionalCost').value);
+        
+        let additionalTotal = 0;
+        document.querySelectorAll('.add-cost-input').forEach(input => {
+            additionalTotal += parseNum(input.value);
+        });
+
         document.getElementById('subTotal').innerText = formatIDR(sub);
-        document.getElementById('grandTotal').innerText = formatIDR(sub + add);
+        document.getElementById('grandTotal').innerText = formatIDR(sub + additionalTotal);
     }
 
     function addRow() {
