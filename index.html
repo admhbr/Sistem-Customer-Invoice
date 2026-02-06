@@ -27,13 +27,14 @@
         
         .col-no { width: 2.5%; }
         .col-date { width: 7.5%; }
-        .col-smu { width: 11%; } 
-        .col-shipper { width: 13%; }
+        .col-smu { width: 10%; } 
+        .col-shipper { width: 12%; }
         .col-route { width: 6%; } 
         .col-comm { width: 7%; }
         .col-qty { width: 3%; }
         .col-money { width: 9%; }
         .col-total { width: 10%; }
+        .col-action { width: 3%; } /* Kolom Aksi */
 
         .tbl-input { border: none; padding: 0; text-align: center; width: 100%; font-size: 8px; background: transparent; height: 100%; }
         .txt-right { text-align: right; padding-right: 3px; }
@@ -44,32 +45,23 @@
         .total-row { border-top: 2px solid var(--primary-blue); color: var(--primary-blue); font-weight: bold; font-size: 15px !important; }
         .val-cell { width: 150px; text-align: right; font-weight: bold; }
 
-        .signature-area { text-align: center; font-size: 11px; margin-top: 25px; width: 220px; float: right; }
+        .signature-area { text-align: center; font-size: 11px; margin-top: 20px; width: 250px; float: right; }
+        .sig-space { height: 120px; } 
 
         .btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
         .btn-blue { background: #0056b3; color: white; }
         .btn-green { background: #28a745; color: white; }
         .btn-orange { background: #f39c12; color: white; }
+        .btn-del { background: #dc3545; color: white; padding: 2px 5px; font-size: 8px; border-radius: 2px; }
 
         @media print {
             @page { size: landscape; margin: 0; }
             body { background: white; padding: 0; }
             .page { box-shadow: none; margin: 0; width: 29.7cm; height: 21cm; border: none; }
-            .no-print-area, .btn-add { display: none !important; }
-            
-            .header-grid input, .header-grid textarea, .top-right-info input, .payment-box input { 
-                border: none !important; padding: 0 !important; background: transparent !important; outline: none !important;
-            }
-
-            table, th, td {
-                border: 1.2pt solid #000 !important;
-                color: #000 !important;
-            }
-            th { 
-                background-color: transparent !important; 
-                color: #000 !important;
-                -webkit-print-color-adjust: exact; 
-            }
+            .no-print-area, .btn-add, .col-action, .btn-del { display: none !important; }
+            .header-grid input, .header-grid textarea, .top-right-info input, .payment-box input { border: none !important; padding: 0 !important; background: transparent !important; outline: none !important; }
+            table, th, td { border: 1.2pt solid #000 !important; color: #000 !important; }
+            th { background-color: transparent !important; color: #000 !important; -webkit-print-color-adjust: exact; }
             .row-total, .tbl-input { background-color: transparent !important; }
         }
     </style>
@@ -80,7 +72,7 @@
     <div>
         <strong>Import CSV:</strong> 
         <input type="file" id="csvFile" accept=".csv" style="width: 170px;">
-        <button class="btn btn-blue" onclick="importDatabase()">Upload Database</button>
+        <button class="btn btn-blue" onclick="importDatabase()">LOAD CSV</button>
     </div>
     <div style="display: flex; gap: 8px;">
         <button class="btn btn-orange" onclick="downloadAsHTML()">SAVE</button>
@@ -94,7 +86,7 @@
         <div class="top-right-info">
             <div class="info-row-flex">
                 <span class="info-label">No</span>
-                <span class="info-content">: <span id="invNo" contenteditable="true" style="color:var(--primary-blue); font-weight:bold;">001A/INV/0126</span></span>
+                <span class="info-content">: <span id="invNoDisplay" contenteditable="true" style="color:var(--primary-blue); font-weight:bold;">001A/INV/0226</span></span>
             </div>
             <div class="info-row-flex">
                 <span class="info-label">Date</span>
@@ -137,6 +129,7 @@
                 <th class="col-money">SC</th>
                 <th class="col-money">DG</th>
                 <th class="col-total">TOTAL</th>
+                <th class="col-action">ACT</th>
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
@@ -172,52 +165,67 @@
             </table>
 
             <div class="signature-area">
-                <span id="signatureDate">Jakarta, ...</span><br><br><br><br>
+                <span id="signatureDate">Jakarta, ...</span>
+                <div class="sig-space"></div>
                 <div style="font-weight:bold; text-decoration:underline;">( Luki Nur Aini )</div>
-                Finance
             </div>
         </div>
     </div>
 </div>
 
 <script id="db-script">
-    // Bagian ini akan diisi otomatis saat Anda klik "SIMPAN CADANGAN"
     let globalDatabase = []; 
+    let invoiceCounter = 1;
+    let lastCustomer = "";
 
     window.onload = () => {
-        if (globalDatabase.length > 0) {
+        const savedDB = localStorage.getItem('invoice_master_db');
+        if (savedDB) {
+            globalDatabase = JSON.parse(savedDB);
             populateDatalist();
-            console.log("Database dimuat dari file HTML ini.");
-        } else {
-            const savedDB = localStorage.getItem('invoice_master_db');
-            if (savedDB) {
-                globalDatabase = JSON.parse(savedDB);
-                populateDatalist();
-            }
         }
         document.getElementById('invDateInput').value = new Date().toISOString().split('T')[0];
         updateSignatureDate();
         addRow();
     }
 
-    // FUNGSI UNTUK MENYIMPAN SELURUH HALAMAN + DATA KE DALAM FILE .HTML
+    function removeRow(btn) {
+        if(confirm("Hapus baris ini?")) {
+            const row = btn.parentNode.parentNode;
+            row.parentNode.removeChild(row);
+            renumberRows();
+            calculate();
+        }
+    }
+
+    function renumberRows() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach((row, index) => {
+            row.cells[0].innerText = index + 1;
+        });
+    }
+
+    function autoIncrementInvoice(currentCust) {
+        if (currentCust && currentCust !== lastCustomer) {
+            const date = new Date();
+            const month = (date.getMonth() + 1).toString().padStart(2, '0');
+            const year = date.getFullYear().toString().slice(-2);
+            const formattedNo = invoiceCounter.toString().padStart(3, '0');
+            document.getElementById('invNoDisplay').innerText = `${formattedNo}/INV/${month}${year}`;
+            invoiceCounter++;
+            lastCustomer = currentCust;
+        }
+    }
+
     function downloadAsHTML() {
         if (globalDatabase.length === 0) return alert("Database masih kosong!");
-        
-        // Simpan ke localStorage juga agar sinkron
-        localStorage.setItem('invoice_master_db', JSON.stringify(globalDatabase));
-
-        // Clone seluruh dokumen
         let currentHTML = document.documentElement.outerHTML;
-        
-        // Masukkan data ke dalam script globalDatabase agar saat dibuka file baru, data sudah ada
         const dataInjected = `let globalDatabase = ${JSON.stringify(globalDatabase)};`;
         currentHTML = currentHTML.replace(/let globalDatabase = \[\];/, dataInjected);
-
         const blob = new Blob([currentHTML], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Sistem_Invoice_Backup_${new Date().toLocaleDateString('id-ID')}.html`;
+        a.download = `Invoice_System_Backup.html`;
         a.click();
     }
 
@@ -246,7 +254,7 @@
             }
             populateDatalist();
             localStorage.setItem('invoice_master_db', JSON.stringify(globalDatabase));
-            alert("Data Berhasil DiUpload");
+            alert("Database Dimuat!");
         };
         reader.readAsText(file);
     }
@@ -265,6 +273,7 @@
     }
 
     function handleMultiAutofill(selectedCust) {
+        autoIncrementInvoice(selectedCust);
         const matches = globalDatabase.filter(d => d.customer === selectedCust);
         if (matches.length > 0) {
             const tbody = document.getElementById('tableBody');
@@ -288,6 +297,7 @@
                     <td><input type="text" class="tbl-input sur txt-right" value="${formatIDR(data.sur)}" oninput="formatAndCalc(this)"></td>
                     <td><input type="text" class="tbl-input dg txt-right" value="${formatIDR(data.dg)}" oninput="formatAndCalc(this)"></td>
                     <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
+                    <td class="col-action" style="text-align:center;"><button class="btn-del" onclick="removeRow(this)">X</button></td>
                 `;
             });
             calculate();
@@ -344,6 +354,7 @@
             <td><input type="text" class="tbl-input sur txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
             <td><input type="text" class="tbl-input dg txt-right" value="Rp 0" oninput="formatAndCalc(this)"></td>
             <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
+            <td class="col-action" style="text-align:center;"><button class="btn-del" onclick="removeRow(this)">X</button></td>
         `;
     }
 
@@ -355,4 +366,3 @@
 </script>
 </body>
 </html>
-
