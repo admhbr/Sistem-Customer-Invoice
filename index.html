@@ -21,22 +21,24 @@
         label { display: block; font-weight: bold; font-size: 9px; text-transform: uppercase; margin-bottom: 1px; }
         input, textarea { width: 100%; border: 1px solid #ccc; padding: 3px; border-radius: 3px; box-sizing: border-box; font-size: 11px; }
 
+        /* TABEL DENGAN KOLOM COMMODITY LEBIH LUAS */
         table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; border: 1.5px solid #000; }
         th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; }
         td { border: 1px solid #000; padding: 0px 1px; vertical-align: middle; height: 20px; font-size: 8px; }
         
         .col-no { width: 2.5%; }
-        .col-date { width: 7.5%; }
-        .col-smu { width: 10%; } 
-        .col-shipper { width: 12%; }
-        .col-route { width: 6%; } 
-        .col-comm { width: 7%; }
+        .col-date { width: 7%; }
+        .col-smu { width: 9%; } 
+        .col-shipper { width: 11%; }
+        .col-route { width: 5.5%; } 
+        .col-comm { width: 13%; } /* DIPERLEBAR dari 7% ke 13% */
         .col-qty { width: 3%; }
-        .col-money { width: 9%; }
+        .col-money { width: 8.5%; }
         .col-total { width: 10%; }
         .col-action { width: 3%; }
 
         .tbl-input { border: none; padding: 0; text-align: center; width: 100%; font-size: 8px; background: transparent; height: 100%; }
+        .txt-left { text-align: left; padding-left: 3px; }
         .txt-right { text-align: right; padding-right: 3px; }
 
         .footer-container { display: grid; grid-template-columns: 1fr 1.2fr; gap: 10px; margin-top: auto; padding-top: 10px; }
@@ -153,7 +155,7 @@
             ACC IDR : <strong>1150011409887</strong>
         </div>
         <div style="text-align:right;">
-            <button class="btn btn-small-add" onclick="addAdditionalCostRow()">+ Additional Cost</button>
+            <button class="btn btn-small-add" onclick="addAdditionalCostRow()">+ Biaya Tambahan</button>
             <table class="summary-table" id="summaryTable">
                 <tr>
                     <td style="text-align:right; padding-right:10px; font-weight:bold;">Sub Total</td>
@@ -190,17 +192,13 @@
         addRow();
     }
 
-    // FUNGSI NOMOR OTOMATIS DENGAN KODE A
     function autoIncrementInvoice(currentCust) {
         if (currentCust && currentCust !== lastCustomer) {
             const date = new Date();
             const month = (date.getMonth() + 1).toString().padStart(2, '0');
             const year = date.getFullYear().toString().slice(-2);
-            
-            // Format 001A
             const formattedNo = invoiceCounter.toString().padStart(3, '0') + "A";
             document.getElementById('invNoDisplay').innerText = `${formattedNo}/INV/${month}${year}`;
-            
             invoiceCounter++;
             lastCustomer = currentCust;
         }
@@ -248,7 +246,7 @@
         const blob = new Blob([currentHTML], { type: 'text/html' });
         const a = document.createElement('a');
         a.href = URL.createObjectURL(blob);
-        a.download = `Invoice_Backup_${new Date().toLocaleDateString('id-ID')}.html`;
+        a.download = `Invoice_Backup.html`;
         a.click();
     }
 
@@ -309,7 +307,7 @@
                     <td><input type="text" class="tbl-input" value="${data.smu}"></td>
                     <td><input type="text" class="tbl-input" value="${data.shipper}"></td>
                     <td><input type="text" class="tbl-input" value="${data.route}"></td>
-                    <td><input type="text" class="tbl-input" value="${data.commodity}"></td>
+                    <td><input type="text" class="tbl-input txt-left" value="${data.commodity}"></td>
                     <td><input type="number" class="tbl-input" value="${data.koli}"></td>
                     <td><input type="number" class="tbl-input kg" value="${data.kg}" oninput="calculate()"></td>
                     <td><input type="number" class="tbl-input vol" value="${data.vol}" oninput="calculate()"></td>
@@ -367,7 +365,7 @@
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input"></td>
-            <td><input type="text" class="tbl-input"></td>
+            <td><input type="text" class="tbl-input txt-left"></td>
             <td><input type="number" class="tbl-input" value="1"></td>
             <td><input type="number" class="tbl-input kg" oninput="calculate()"></td>
             <td><input type="number" class="tbl-input vol" oninput="calculate()"></td>
