@@ -24,7 +24,7 @@
         textarea { resize: none; font-family: inherit; }
 
         table { width: 100%; border-collapse: collapse; margin-top: 15px; table-layout: fixed; border: 1.5px solid #000; }
-        th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; }
+        th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; font-weight: bold; }
         td { border: 1px solid #000; padding: 0px 1px; vertical-align: middle; height: 20px; font-size: 8px; }
         
         .col-no { width: 2.5%; }
@@ -56,12 +56,27 @@
         .btn-orange { background: #f39c12; color: white; }
         .btn-green { background: #28a745; color: white; }
 
+        /* CSS KHUSUS PRINT */
         @media print {
             @page { size: landscape; margin: 0; }
             body { background: white; padding: 0; }
             .page { box-shadow: none; margin: 0; width: 29.7cm; height: 21cm; border: none; }
-            .no-print-area, .btn-add, .col-action, .btn-del { display: none !important; }
+            
+            /* Sembunyikan SEMUA tombol saat print */
+            .no-print-area, .col-action, button, .btn-add { display: none !important; }
+            
+            /* Header Tabel jadi Bold Hitam Pekat */
+            th { 
+                background: #eee !important; 
+                color: #000 !important; 
+                font-weight: 900 !important; 
+                border: 1.5pt solid #000 !important; 
+                font-size: 9px !important; 
+            }
+            
+            td { border: 1pt solid #000 !important; }
             input, textarea { border: none !important; padding: 0 !important; outline: none !important; background: transparent !important; }
+            .total-row { border-top: 2pt solid #000 !important; }
         }
     </style>
 </head>
@@ -134,7 +149,7 @@
         <tbody id="tableBody"></tbody>
     </table>
     
-    <button onclick="addRow()" style="margin-top:5px; font-size:10px; cursor:pointer;">+ Add row</button>
+    <button class="btn-add" onclick="addRow()" style="margin-top:5px; font-size:10px; cursor:pointer;">+ Add row</button>
 
     <div class="footer-container">
         <div class="payment-box" style="font-size: 10px;">
@@ -156,7 +171,7 @@
             <div class="signature-area">
                 <span id="signatureDate">Jakarta, ...</span>
                 <div class="sig-space"></div>
-                <div style="font-weight:bold; text-decoration:underline;">( Luki Nur Ain )</div>
+                <div style="font-weight:bold; text-decoration:underline;">( Luki Nur Aini )</div>
             </div>
         </div>
     </div>
