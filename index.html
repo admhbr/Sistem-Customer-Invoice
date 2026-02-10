@@ -56,24 +56,12 @@
         .btn-orange { background: #f39c12; color: white; }
         .btn-green { background: #28a745; color: white; }
 
-        /* CSS KHUSUS PRINT */
         @media print {
             @page { size: landscape; margin: 0; }
             body { background: white; padding: 0; }
             .page { box-shadow: none; margin: 0; width: 29.7cm; height: 21cm; border: none; }
-            
-            /* Sembunyikan SEMUA tombol saat print */
             .no-print-area, .col-action, button, .btn-add { display: none !important; }
-            
-            /* Header Tabel jadi Bold Hitam Pekat */
-            th { 
-                background: #eee !important; 
-                color: #000 !important; 
-                font-weight: 900 !important; 
-                border: 1.5pt solid #000 !important; 
-                font-size: 9px !important; 
-            }
-            
+            th { background: #eee !important; color: #000 !important; font-weight: 900 !important; border: 1.5pt solid #000 !important; font-size: 9px !important; }
             td { border: 1pt solid #000 !important; }
             input, textarea { border: none !important; padding: 0 !important; outline: none !important; background: transparent !important; }
             .total-row { border-top: 2pt solid #000 !important; }
@@ -194,6 +182,14 @@
         return parseFloat(clean) || 0;
     }
 
+    // FUNGSI BARU: Update nomor urut otomatis
+    function refreshRowNumbers() {
+        const rows = document.querySelectorAll('#tableBody tr');
+        rows.forEach((row, index) => {
+            row.querySelector('.row-number').innerText = index + 1;
+        });
+    }
+
     function calculate() {
         let sub = 0;
         document.querySelectorAll('#tableBody tr').forEach(row => {
@@ -250,7 +246,7 @@
             matches.forEach((data, index) => {
                 const row = tbody.insertRow();
                 row.innerHTML = `
-                    <td style="text-align:center;">${index + 1}</td>
+                    <td style="text-align:center;"><span class="row-number" contenteditable="true">${index + 1}</span></td>
                     <td><input type="text" class="tbl-input" value="${data.date}"></td>
                     <td><input type="text" class="tbl-input" value="${data.smu}"></td>
                     <td><input type="text" class="tbl-input" value="${data.shipper}"></td>
@@ -264,7 +260,7 @@
                     <td><input type="text" class="tbl-input sur txt-right" value="${formatIDR(data.sur)}" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
                     <td><input type="text" class="tbl-input dg txt-right" value="${formatIDR(data.dg)}" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
                     <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
-                    <td class="col-action" style="text-align:center;"><button onclick="this.closest('tr').remove();calculate();">X</button></td>
+                    <td class="col-action" style="text-align:center;"><button onclick="this.closest('tr').remove();refreshRowNumbers();calculate();">X</button></td>
                 `;
             });
             calculate();
@@ -275,7 +271,7 @@
         const tbody = document.getElementById('tableBody');
         const row = tbody.insertRow();
         row.innerHTML = `
-            <td style="text-align:center;">${tbody.rows.length}</td>
+            <td style="text-align:center;"><span class="row-number" contenteditable="true">${tbody.rows.length}</span></td>
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input"></td>
@@ -289,7 +285,7 @@
             <td><input type="text" class="tbl-input sur txt-right" value="Rp 0" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
             <td><input type="text" class="tbl-input dg txt-right" value="Rp 0" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
             <td class="row-total txt-right" style="font-weight:bold;">Rp 0</td>
-            <td class="col-action" style="text-align:center;"><button onclick="this.closest('tr').remove();calculate();">X</button></td>
+            <td class="col-action" style="text-align:center;"><button onclick="this.closest('tr').remove();refreshRowNumbers();calculate();">X</button></td>
         `;
     }
 
