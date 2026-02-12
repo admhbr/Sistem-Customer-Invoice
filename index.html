@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Sistem Invoice By Leo</title>
+    <title>Sistem Invoice By LC</title>
     <style>
         :root { --primary-blue: #004a99; --dark-grey: #444; }
         body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #525659; margin: 0; padding: 10px; display: flex; flex-direction: column; align-items: center; }
@@ -27,6 +27,10 @@
         th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; font-weight: bold; }
         td { border: 1px solid #000; padding: 0px 1px; vertical-align: middle; height: 20px; font-size: 8px; }
         
+        /* Footer Table Styling */
+        .table-footer { background: #f2f2f2; font-weight: bold; }
+        .table-footer td { border-top: 2px solid #000; }
+
         .col-no { width: 2.5%; }
         .col-date { width: 7%; }
         .col-smu { width: 9%; } 
@@ -63,6 +67,7 @@
             .no-print-area, .col-action, button, .btn-add { display: none !important; }
             th { background: #eee !important; color: #000 !important; font-weight: 900 !important; border: 1.5pt solid #000 !important; font-size: 9px !important; }
             td { border: 1pt solid #000 !important; }
+            .table-footer td { background: #eee !important; }
             input, textarea { border: none !important; padding: 0 !important; outline: none !important; background: transparent !important; }
             .total-row { border-top: 2pt solid #000 !important; }
         }
@@ -135,6 +140,16 @@
             </tr>
         </thead>
         <tbody id="tableBody"></tbody>
+        <tfoot>
+            <tr class="table-footer">
+                <td colspan="6" style="text-align:right; padding-right:10px;">TOTAL</td>
+                <td id="totalKoli" style="text-align:center;">0</td>
+                <td id="totalKg" style="text-align:center;">0</td>
+                <td id="totalVol" style="text-align:center;">0</td>
+                <td colspan="5"></td>
+                <td class="col-action"></td>
+            </tr>
+        </tfoot>
     </table>
     
     <button class="btn-add" onclick="addRow()" style="margin-top:5px; font-size:10px; cursor:pointer;">+ Add row</button>
@@ -182,7 +197,6 @@
         return parseFloat(clean) || 0;
     }
 
-    // FUNGSI BARU: Update nomor urut otomatis
     function refreshRowNumbers() {
         const rows = document.querySelectorAll('#tableBody tr');
         rows.forEach((row, index) => {
@@ -192,7 +206,12 @@
 
     function calculate() {
         let sub = 0;
+        let sumKoli = 0;
+        let sumKg = 0;
+        let sumVol = 0;
+
         document.querySelectorAll('#tableBody tr').forEach(row => {
+            const koli = parseFloat(row.querySelector('.koli-input').value) || 0;
             const kg = parseFloat(row.querySelector('.kg').value) || 0;
             const vol = parseFloat(row.querySelector('.vol').value) || 0;
             const r = parseNum(row.querySelector('.rate').value);
@@ -211,9 +230,18 @@
             const s = parseNum(surEl.value);
             const total = (vol * r) + a + s + d;
             row.querySelector('.row-total').innerText = formatIDR(total);
+            
             sub += total;
+            sumKoli += koli;
+            sumKg += kg;
+            sumVol += vol;
         });
         
+        // Update footer totals
+        document.getElementById('totalKoli').innerText = sumKoli;
+        document.getElementById('totalKg').innerText = sumKg;
+        document.getElementById('totalVol').innerText = sumVol;
+
         let addTotal = 0;
         document.querySelectorAll('.add-cost-input').forEach(input => { addTotal += parseNum(input.value); });
         document.getElementById('subTotal').innerText = formatIDR(sub);
@@ -252,7 +280,7 @@
                     <td><input type="text" class="tbl-input" value="${data.shipper}"></td>
                     <td><input type="text" class="tbl-input" value="${data.route}"></td>
                     <td><input type="text" class="tbl-input txt-left comm-input" value="${data.commodity}" oninput="calculate()"></td>
-                    <td><input type="number" class="tbl-input" value="${data.koli}"></td>
+                    <td><input type="number" class="tbl-input koli-input" value="${data.koli}" oninput="calculate()"></td>
                     <td><input type="number" class="tbl-input kg" value="${data.kg}" oninput="calculate()"></td>
                     <td><input type="number" class="tbl-input vol" value="${data.vol}" oninput="calculate()"></td>
                     <td><input type="text" class="tbl-input rate txt-right" value="${formatIDR(data.rate)}" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
@@ -277,7 +305,7 @@
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input"></td>
             <td><input type="text" class="tbl-input txt-left comm-input" oninput="calculate()"></td>
-            <td><input type="number" class="tbl-input" value="1"></td>
+            <td><input type="number" class="tbl-input koli-input" value="1" oninput="calculate()"></td>
             <td><input type="number" class="tbl-input kg" oninput="calculate()"></td>
             <td><input type="number" class="tbl-input vol" oninput="calculate()"></td>
             <td><input type="text" class="tbl-input rate txt-right" value="Rp 0" oninput="this.value=formatIDR(parseNum(this.value));calculate()"></td>
