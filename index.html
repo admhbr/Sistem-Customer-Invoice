@@ -27,17 +27,16 @@
         th { background: var(--dark-grey); color: white; padding: 3px 1px; font-size: 8px; border: 1px solid #000; font-weight: bold; }
         td { border: 1px solid #000; padding: 0px 1px; vertical-align: middle; height: 20px; font-size: 8px; }
         
-        /* Footer Table Styling */
         .table-footer { background: #f2f2f2; font-weight: bold; }
-        .table-footer td { border-top: 2px solid #000; }
 
+        /* PENYESUAIAN LEBAR KOLOM (TOTAL 100%) */
         .col-no { width: 2.5%; }
         .col-date { width: 7%; }
         .col-smu { width: 9%; } 
-        .col-shipper { width: 11%; }
+        .col-shipper { width: 10%; } /* Dikurangi 1% */
         .col-route { width: 5.5%; } 
-        .col-comm { width: 13%; }
-        .col-qty { width: 3%; }
+        .col-comm { width: 12.5%; } /* Dikurangi 0.5% */
+        .col-qty { width: 4.5%; }    /* DINAIKKAN dari 3% agar muat 5 digit */
         .col-money { width: 8.5%; }
         .col-total { width: 10%; }
         .col-action { width: 3%; }
@@ -55,11 +54,6 @@
         .signature-area { text-align: center; font-size: 11px; margin-top: 20px; width: 250px; float: right; }
         .sig-space { height: 100px; } 
 
-        .btn { padding: 8px 12px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; }
-        .btn-blue { background: #0056b3; color: white; }
-        .btn-orange { background: #f39c12; color: white; }
-        .btn-green { background: #28a745; color: white; }
-
         @media print {
             @page { size: landscape; margin: 0; }
             body { background: white; padding: 0; }
@@ -67,7 +61,7 @@
             .no-print-area, .col-action, button, .btn-add { display: none !important; }
             th { background: #eee !important; color: #000 !important; font-weight: 900 !important; border: 1.5pt solid #000 !important; font-size: 9px !important; }
             td { border: 1pt solid #000 !important; }
-            .table-footer td { background: #eee !important; }
+            .table-footer td { background: #eee !important; border-top: 1.5pt solid #000 !important; }
             input, textarea { border: none !important; padding: 0 !important; outline: none !important; background: transparent !important; }
             .total-row { border-top: 2pt solid #000 !important; }
         }
@@ -237,10 +231,9 @@
             sumVol += vol;
         });
         
-        // Update footer totals
-        document.getElementById('totalKoli').innerText = sumKoli;
-        document.getElementById('totalKg').innerText = sumKg;
-        document.getElementById('totalVol').innerText = sumVol;
+        document.getElementById('totalKoli').innerText = sumKoli.toLocaleString('id-ID');
+        document.getElementById('totalKg').innerText = sumKg.toLocaleString('id-ID');
+        document.getElementById('totalVol').innerText = sumVol.toLocaleString('id-ID');
 
         let addTotal = 0;
         document.querySelectorAll('.add-cost-input').forEach(input => { addTotal += parseNum(input.value); });
